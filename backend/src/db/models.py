@@ -1,34 +1,32 @@
-from typing import Optional, List, Dict, Any
-from sqlmodel import Field, SQLModel, Column
-from sqlalchemy.dialects.postgresql import JSON, ARRAY
-from sqlalchemy import String, Integer
+from datetime import datetime
+from sqlmodel import Field, SQLModel, Column, Text
 
-class ClinicalTrial(SQLModel, table=True):
-    __tablename__ = "clinical_trials"
+class Trial(SQLModel, table=True):
+    __tablename__ = "trials"
 
-    # --- 1. Identification ---
-    nct_id: str = Field(primary_key=True, index=True)
-    title: str
-    organization: str
-
-    # --- 2. Search & Filter Keys ---
-    status: str 
-    conditions: List[str] = Field(sa_column=Column(ARRAY(String)))
-    interventions: List[str] = Field(sa_column=Column(ARRAY(String)))
-    phases: List[str] = Field(sa_column=Column(ARRAY(String)))
-    enrollment: Optional[int] = Field(default=None, sa_column=Column(Integer))
+    nct_id: str = Field(primary_key=True)
+    title: str = Field(sa_column=Column(Text, nullable=False))
+    organization: str | None = Field(default=None, sa_column=Column(Text))
+    status: str | None = None
+    last_updated: datetime = Field(
+        default_factory=datetime.now,
+        nullable=False
+    )
     
-    # --- 3. Relevant investment info ---
-    # STUDY DESIGN
-    study_type: Optional[str] = None
-    design_details: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    # --- Searchables ---
+    conditions: str | None = Field(default=None, sa_column=Column(Text))
+    interventions: str | None = Field(default=None, sa_column=Column(Text))
     
-    # EFFICACY (And results if available)
-    primary_outcomes: List[Dict[str, str]] = Field(default=[], sa_column=Column(JSON))
-    efficacy_result_summary: List[Dict[str, Any]] = Field(default=[], sa_column=Column(JSON))
-    
-    # SAFETY
-    safety_summary: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    # --- 1. TRIAL DESIGN ---
+    design: str | None = Field(default=None, sa_column=Column(Text))
+    phase: str | None = Field(default=None, sa_column=Column(Text))
 
-    # --- 4. Full raw json blob ---
-    raw_json: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    # --- 2. EFFICACY ---
+    p_values: str | None = Field(default=None, sa_column=Column(Text))
+    
+    # --- 3. SAFETY ---
+    safety: str | None = Field(default=None, sa_column=Column(Text))
+
+    # --- Metrics ---
+    enrollment_count: str | None = None
+    enrollment_type: str | None = None

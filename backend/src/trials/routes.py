@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from src.db.main import get_session
-from src.db.models import ClinicalTrial
+from src.db.models import Trial
 from src.trials.service import TrialService
 
 router = APIRouter()
@@ -10,7 +10,7 @@ router = APIRouter()
 def get_service():
   return TrialService()
 
-@router.get("/trials/{nct_id}", response_model=ClinicalTrial)
+@router.get("/trials/{nct_id}", response_model=Trial)
 def get_trial_data(
   nct_id: str, 
   session: Session = Depends(get_session), 
