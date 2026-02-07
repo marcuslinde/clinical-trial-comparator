@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional
 from sqlmodel import Field, SQLModel, Column, DateTime
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy import String
@@ -12,15 +12,14 @@ class ClinicalTrial(SQLModel, table=True):
 
     nct_id: str = Field(primary_key=True, index=True)
 
-    # Relevant Metadata for Investors
     title: str
     organization: str
     status: str
     study_type: Optional[str] = None
     phase: Optional[str] = None
-    
-    conditions: List[str] = Field(
-        default=[], 
+
+    conditions: list[str] = Field(
+        default_factory=list,
         sa_column=Column(ARRAY(String))
     )
 
@@ -29,5 +28,7 @@ class ClinicalTrial(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True))
     )
 
-    # Rest of data stored as JSON for flexibility
-    study_data: dict = Field(default={}, sa_column=Column(JSON))
+    study_data: dict = Field(
+        default_factory=dict,
+        sa_column=Column(JSON)
+    )
