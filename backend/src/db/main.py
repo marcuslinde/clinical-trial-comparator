@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Session, create_engine
 from src.config import settings
+from src.db.models import ClinicalTrial
 
 engine = create_engine(
     settings.DATABASE_URL, 
