@@ -1,3 +1,5 @@
+from datetime import datetime
+
 def truncate(text: str | None, limit: int) -> str | None:
     if not text:
         return None
@@ -15,35 +17,36 @@ def extract_trial_data(trial_json: dict) -> dict:
     cond_mod = protocol.get("conditionsModule", {})
     arms_mod = protocol.get("armsInterventionsModule", {})
 
-
     # --- ORGANIZATION ---
     raw_org = ident_mod.get("organization", {}).get("fullName", "N/A")
     org_name = truncate(raw_org, 50)
 
-
-    # --- STATUS  ---
+    # --- STATUS & DATES ---
     status_base = status_mod.get("overallStatus", "UNKNOWN")
     comp_date = status_mod.get("completionDateStruct", {}).get("date", "")
     status_str = f"{status_base} ({comp_date})" if comp_date else status_base
-
+    
+    # [FIX] Parse last_updated to satisfy Model
+    date_str = status_mod.get("lastUpdatePostDateStruct", {}).get("date")
+    last_updated_dt = datetime.now()
+    if date_str:
+        try:
+            last_updated_dt = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            pass
 
     # --- SAFETY ---
     safety_str = "No Results Posted"
-
     if results:
         adverse = results.get("adverseEventsModule", {})
         serious_events = adverse.get("seriousEvents", [])
         
-        # Strategy 1: List specific serious adverse events (High value for investors)
         if serious_events:
-            # Get unique terms, limit to top 5 to avoid database bloat
             terms = list(set([e.get("term", "Unknown") for e in serious_events]))
             terms_str = ", ".join(terms[:5])
             if len(terms) > 5:
                 terms_str += f", +{len(terms)-5} more"
             safety_str = f"Serious Events: {terms_str}"
-        
-        # Strategy 2: Fallback to percentage if no specific terms but data exists
         elif adverse.get("eventGroups"):
             total_serious = 0
             total_at_risk = 0
@@ -59,25 +62,18 @@ def extract_trial_data(trial_json: dict) -> dict:
         else:
              safety_str = "No Safety Issues Reported"
 
-
-    # --- EFFICACY  ---
+    # --- EFFICACY ---
     efficacy_str = "No Results Posted"
-
     if results:
         outcomes = results.get("outcomeMeasuresModule", {}).get("outcomeMeasures", [])
         primary_outcomes = [o for o in outcomes if o.get("type") == "PRIMARY"]
         
         outcome_summaries = []
-        
         for outcome in primary_outcomes:
-            title = truncate(outcome.get("title", "Primary Outcome"), 60)
-            
-            # 1. Map Group IDs to Names (e.g., "OG000" -> "Clopidogrel")
+            title = outcome.get("title", "Primary Outcome")
             group_map = {g.get("id"): g.get("title", "Group") for g in outcome.get("groups", [])}
             
-            # 2. Extract Measurements
             measurements = []
-            # Navigate deep structure: classes -> categories -> measurements
             classes = outcome.get("classes", [])
             if classes and classes[0].get("categories"):
                 raw_measures = classes[0]["categories"][0].get("measurements", [])
@@ -86,25 +82,21 @@ def extract_trial_data(trial_json: dict) -> dict:
                     val = m.get("value")
                     if g_id and val:
                         g_name = group_map.get(g_id, g_id)
-                        measurements.append(f"{truncate(g_name, 15)}: {val}")
+                        measurements.append(f"{g_name}: {val}")
             
-            # 3. Extract P-Value
             p_val = None
             for analysis in outcome.get("analyses", []):
                 p_val = analysis.get("pValue")
-                if p_val: break # Take the first p-value found
+                if p_val: break 
             
-            # 4. Construct String
             measure_str = " vs ".join(measurements) if measurements else "No data values"
             p_str = f"(p={p_val})" if p_val else ""
-            
             outcome_summaries.append(f"[{title}] {measure_str} {p_str}")
 
         if outcome_summaries:
-            # Join multiple primary outcomes with a delimiter
             efficacy_str = " || ".join(outcome_summaries)
         elif outcomes:
-            efficacy_str = "Results available (No Primary Outcome specific data parsed)"
+            efficacy_str = "Results available (Parsing Skipped)"
 
     # --- STANDARD FIELDS ---
     conditions = cond_mod.get("conditions", [])
@@ -125,6 +117,7 @@ def extract_trial_data(trial_json: dict) -> dict:
         "title": truncate(ident_mod.get("briefTitle"), 75),
         "organization": org_name,
         "status": status_str,
+        "last_updated": last_updated_dt,
         "conditions": condition_str,
         "interventions": ", ".join(intervention_list) if intervention_list else "None",
         "design": design_mod.get("studyType", "Type Not Specified"),

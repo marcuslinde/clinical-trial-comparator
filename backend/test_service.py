@@ -18,7 +18,7 @@ def run_raw_test():
     service = TrialService()
     
     # This trial (Dapagliflozin) has Results, Safety, and P-Values
-    test_id = "NCT01586975"
+    test_id = "NCT02571634"
 
     print(f"--- FETCHING {test_id} ---")
 
