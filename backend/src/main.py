@@ -23,13 +23,15 @@ origins = [
     "http://127.0.0.1:5173",
 
     # Production
-    "https://clinical-trial-comparator.vercel.app"
+    "https://clinical-trial-comparator.vercel.app",
+    "https://clinical-trial-comparator.vercel.app/#"
 ]
 
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app$",
     allow_credentials=True, # Allow cookies/auth headers
     allow_methods=["*"],    # Allow all methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],    # Allow all headers
