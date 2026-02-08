@@ -16,9 +16,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS allowed urls
-# For development, ["*"] allows everyone
-# For production, list specific domains
+# CORS
 origins = [
     # Local Development (Vite Defaults)
     "http://localhost:5173",

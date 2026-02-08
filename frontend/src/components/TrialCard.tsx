@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Activity, Bookmark } from "lucide-react";
 import type { Trial } from "@/services/api";
-import { getStatusStyles } from "../utils/trialHelpers";
+import { getStatusStyles } from "@/utils/trialHelpers";
 
 interface TrialCardProps {
 	trial: Trial;

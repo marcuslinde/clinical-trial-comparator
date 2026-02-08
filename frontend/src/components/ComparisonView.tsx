@@ -11,7 +11,7 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ArrowLeft, Users, FileText, Activity } from "lucide-react";
 import type { Trial } from "@/services/api";
-import { getStatusStyles } from "../utils/trialHelpers";
+import { getStatusStyles } from "@/utils/trialHelpers";
 
 interface ComparisonViewProps {
 	trials: Trial[];

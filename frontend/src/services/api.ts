@@ -13,8 +13,8 @@ export interface Trial {
 	// Comparison Data
 	design: string;
 	phase: string;
-	enrollment_count?: string;
-	enrollment_type?: string;
+	enrollment_count: number | null;
+	enrollment_type: string | null;
 	safety: string;
 	efficacy: string;
 }
