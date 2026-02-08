@@ -22,7 +22,7 @@ class Trial(SQLModel, table=True):
     phase: str | None = Field(default=None, sa_column=Column(Text))
 
     # --- 2. EFFICACY ---
-    p_values: str | None = Field(default=None, sa_column=Column(Text))
+    efficacy: str | None = Field(default=None, sa_column=Column(Text))
     
     # --- 3. SAFETY ---
     safety: str | None = Field(default=None, sa_column=Column(Text))
