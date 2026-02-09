@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Trial } from "@/services/api";
 import { searchTrials } from "@/services/api";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowLeft, GitCompare, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ComparisonView } from "@/components/ComparisonView";
 import { TrialCard } from "@/components/TrialCard";
