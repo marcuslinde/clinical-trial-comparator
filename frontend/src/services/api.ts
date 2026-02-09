@@ -19,7 +19,7 @@ export interface Trial {
 	efficacy: string;
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const searchTrials = async (query: string): Promise<Trial[]> => {
 	if (!query) return [];

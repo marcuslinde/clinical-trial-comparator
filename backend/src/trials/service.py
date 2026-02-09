@@ -1,4 +1,4 @@
-import httpx
+from curl_cffi.requests import AsyncSession
 from sqlmodel import Session, select
 from src.db.models import SavedTrial
 from src.trials.mapper import extract_trial_data
@@ -9,9 +9,11 @@ class TrialService:
     
     # --- SEARCH ---
     async def search_trials(self, query: str) -> list[dict]:
-        """Hits API, returns clean list. No DB."""
+        """Hits API using a Chrome-impersonated session to bypass 403."""
         params = {"query.term": query, "pageSize": 20, "countTotal": "false"}
-        async with httpx.AsyncClient() as client:
+        
+        # 'impersonate="chrome"' makes the request look identical to a real browser
+        async with AsyncSession(impersonate="chrome") as client:
             resp = await client.get(BASE_URL, params=params)
             resp.raise_for_status()
             return [extract_trial_data(t) for t in resp.json().get("studies", [])]
@@ -40,7 +42,7 @@ class TrialService:
 
     # --- GET DETAILS FOR specific BOOKMARK ---
     async def get_full_trial(self, nct_id: str) -> dict | None:
-        async with httpx.AsyncClient() as client:
+        async with AsyncSession(impersonate="chrome") as client:
             try:
                 resp = await client.get(f"{BASE_URL}/{nct_id}", timeout=10.0)
                 resp.raise_for_status()
