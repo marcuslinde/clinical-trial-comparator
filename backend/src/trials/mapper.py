@@ -5,6 +5,47 @@ def truncate(text: str | None, limit: int) -> str | None:
         return None
     return (text[:limit] + '...') if len(text) > limit else text
 
+def map_basic_search(trial_json: dict) -> dict:
+    protocol = trial_json.get("protocolSection", {})
+
+    # --- Identification ---
+    ident = protocol.get("identificationModule", {})
+    nct_id = ident.get("nctId")
+    title = ident.get("briefTitle")
+    org = ident.get("organization", {}).get("fullName")
+
+    # --- Status & phases ---
+    status = protocol.get("statusModule", {}).get("overallStatus", "UNKNOWN")
+    phases = protocol.get("designModule", {}).get("phases", [])
+    if not phases:
+        phases = ["Not Specified"]
+
+    # --- Conditions ---
+    conditions = protocol.get("conditionsModule", {}).get("conditions", [])
+    if not conditions:
+        conditions = ["No Conditions Listed"]
+
+    # --- Interventions ---
+    interventions = protocol.get("armsInterventionsModule", {}).get("interventions", [])
+    intervention_names = [
+        item.get("name") for item in interventions 
+        if item.get("name")
+    ]
+    if not intervention_names:
+        intervention_names = ["No interventions listed"]
+
+
+    return {
+        "nct_id": nct_id,
+        "title": title,
+        "organization": org,
+        "status": status,
+        "conditions": conditions,
+        "interventions": intervention_names,
+        "phases": phases
+    } 
+
+
 def extract_trial_data(trial_json: dict) -> dict:
     """Maps ClinicalTrials.gov API JSON to database schema dictionary."""
     protocol = trial_json.get("protocolSection", {})
