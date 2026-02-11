@@ -13,11 +13,12 @@ interface TrialCardProps {
 }
 
 export function TrialCard({ trial, isSelected, onToggle }: TrialCardProps) {
-	const interventions = (trial.interventions || "")
-		.split(",")
-		.filter(Boolean)
-		.slice(0, 3);
-	const hasMore = (trial.interventions || "").split(",").length > 3;
+	// Fallback to empty arrays to prevent crashes
+	const interventions = trial.interventions || [];
+	const conditions = trial.conditions || [];
+
+	const visibleInterventions = interventions.slice(0, 3);
+	const hasMore = interventions.length > 3;
 
 	return (
 		<Card
@@ -27,12 +28,13 @@ export function TrialCard({ trial, isSelected, onToggle }: TrialCardProps) {
 			onClick={() => onToggle(trial.nct_id)}
 		>
 			<div className="flex items-stretch">
+				{/* Selection Stripe */}
 				<div
 					className={`w-1.5 shrink-0 ${isSelected ? "bg-blue-500" : "bg-transparent group-hover:bg-slate-200"}`}
 				/>
 
 				<div className="p-5 flex-1 flex flex-col sm:flex-row gap-5">
-					{/* Actions Column */}
+					{/* Actions Column (Checkbox/Save) */}
 					<div className="pt-1 flex flex-col gap-4 items-center">
 						<Checkbox
 							checked={isSelected}
@@ -51,8 +53,9 @@ export function TrialCard({ trial, isSelected, onToggle }: TrialCardProps) {
 						</Button>
 					</div>
 
-					{/* Content */}
+					{/* Main Content */}
 					<div className="flex-1 min-w-0 space-y-3">
+						{/* Header: Badges & ID */}
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div className="flex items-center gap-2">
 								<Badge
@@ -64,7 +67,7 @@ export function TrialCard({ trial, isSelected, onToggle }: TrialCardProps) {
 									variant="outline"
 									className="text-slate-600 border-slate-200 bg-slate-50 font-medium"
 								>
-									{trial.phase}
+									{(trial.phases || []).join("/") || "N/A"}
 								</Badge>
 							</div>
 							<span className="font-mono text-xs text-slate-400">
@@ -72,10 +75,12 @@ export function TrialCard({ trial, isSelected, onToggle }: TrialCardProps) {
 							</span>
 						</div>
 
+						{/* Title */}
 						<h3 className="text-lg font-bold text-slate-900 leading-snug group-hover:text-blue-700">
 							{trial.title}
 						</h3>
 
+						{/* Metadata Row: Org & Conditions */}
 						<div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-slate-600">
 							<div className="flex items-center gap-2 min-w-0">
 								<Building2 className="h-4 w-4 text-slate-400 shrink-0" />
@@ -85,19 +90,40 @@ export function TrialCard({ trial, isSelected, onToggle }: TrialCardProps) {
 							</div>
 							<div className="flex items-center gap-2 min-w-0 max-w-md">
 								<Activity className="h-4 w-4 text-slate-400 shrink-0" />
-								<span className="truncate">{trial.conditions}</span>
+								<span className="truncate">
+									{conditions.join(", ") || "No conditions listed"}
+								</span>
 							</div>
 						</div>
 
-						{interventions.length > 0 && (
+						{/* NEW: Dates Row */}
+						<div className="flex items-center gap-3 text-xs text-slate-500 font-medium pt-1">
+							<div className="flex items-center gap-1.5">
+								<span className="text-slate-400">Updated:</span>
+								<span className="text-slate-700">
+									{trial.last_updated || "N/A"}
+								</span>
+							</div>
+							<span className="text-slate-300">•</span>
+							<div className="flex items-center gap-1.5">
+								<span className="text-slate-400">Completion:</span>
+								<span className="text-slate-700">
+									{/* Requires 'completion_date' to be added to Trial interface in api.ts */}
+									{trial.completion_date || "N/A"}
+								</span>
+							</div>
+						</div>
+
+						{/* Interventions Tags */}
+						{visibleInterventions.length > 0 && (
 							<div className="pt-2 flex flex-wrap gap-2 items-center">
-								{interventions.map((tag, i) => (
+								{visibleInterventions.map((tag, i) => (
 									<Badge
 										key={i}
 										variant="secondary"
 										className="bg-slate-100 text-slate-700 border border-slate-200 font-normal"
 									>
-										{tag.trim()}
+										{tag}
 									</Badge>
 								))}
 								{hasMore && (
