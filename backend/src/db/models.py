@@ -1,18 +1,30 @@
 from datetime import datetime
-from sqlmodel import Field, SQLModel, Column, Text
+from typing import List, Optional
+from sqlmodel import Field, SQLModel, Column, String, ARRAY
 
 class SavedTrial(SQLModel, table=True):
     __tablename__ = "saved_trials"
 
     nct_id: str = Field(primary_key=True)
     
-    # Metadata
-    title: str = Field(sa_column=Column(Text, nullable=False))
-    organization: str | None = Field(default=None, sa_column=Column(Text))
+    title: str
+    organization: Optional[str] = None
+    status: Optional[str] = "UNKNOWN"
     
-    # Helpful for searching your own bookmarks locally
-    conditions: str | None = Field(default=None, sa_column=Column(Text))
-    interventions: str | None = Field(default=None, sa_column=Column(Text))
+    # We use sa_column to tell SQLModel "This is a Postgres Array of Strings"
+    conditions: List[str] = Field(
+        default=[], 
+        sa_column=Column(ARRAY(String))
+    )
     
-    # When did the user save this?
+    interventions: List[str] = Field(
+        default=[], 
+        sa_column=Column(ARRAY(String))
+    )
+    
+    phases: List[str] = Field(
+        default=[], 
+        sa_column=Column(ARRAY(String))
+    )
+    
     saved_at: datetime = Field(default_factory=datetime.now)

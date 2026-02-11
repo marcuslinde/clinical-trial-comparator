@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Trial } from "@/services/api";
-import { searchTrials } from "@/services/api";
+import { searchTrials, fetchComparison } from "@/services/api"; // Import the new fetcher
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -12,29 +12,47 @@ import { SelectionBar } from "@/components/SelectionBar";
 export default function DashboardHome() {
 	const [query, setQuery] = useState("");
 	const [trials, setTrials] = useState<Trial[]>([]);
+
+	// Detailed trials for comparison view (contains AI data)
+	const [detailedTrials, setDetailedTrials] = useState<Trial[]>([]);
+
 	const [loading, setLoading] = useState(false);
+	const [comparingLoading, setComparingLoading] = useState(false); // New loading state for AI
 	const [error, setError] = useState("");
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 	const [isComparing, setIsComparing] = useState(false);
 
 	const handleSearch = async () => {
 		if (!query.trim()) return;
-
 		setLoading(true);
 		setError("");
 		setSelectedIds([]);
+		setIsComparing(false);
 
 		try {
 			const results = await searchTrials(query);
 			setTrials(results);
-			if (results.length === 0) {
-				setError("No trials found. Try a different term.");
-			}
+			if (results.length === 0) setError("No trials found.");
 		} catch (err) {
-			console.error(err);
-			setError("Failed to connect to the clinical trials database.");
+			setError("Failed to connect to database.");
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	const handleCompare = async () => {
+		setComparingLoading(true);
+		setIsComparing(true); // Switch view immediately to show loading spinner
+		try {
+			// Fetch the full details (with AI) from the backend
+			const details = await fetchComparison(selectedIds);
+			setDetailedTrials(details);
+		} catch (err) {
+			console.error(err);
+			setError("Failed to analyze trials.");
+			setIsComparing(false); // Go back if error
+		} finally {
+			setComparingLoading(false);
 		}
 	};
 
@@ -44,12 +62,9 @@ export default function DashboardHome() {
 		);
 	};
 
-	const selectedTrials = trials.filter((t) => selectedIds.includes(t.nct_id));
-
 	return (
 		<DashboardLayout>
 			<div className="max-w-7xl mx-8 space-y-8 h-full flex flex-col pt-6">
-				{/* Header */}
 				<header className="flex flex-col gap-2 shrink-0">
 					<h1 className="text-3xl font-bold tracking-tight text-slate-900">
 						Clinical Trial Intelligence
@@ -61,7 +76,8 @@ export default function DashboardHome() {
 
 				{isComparing ? (
 					<ComparisonView
-						trials={selectedTrials}
+						trials={detailedTrials} // Pass the detailed data!
+						loading={comparingLoading} // Pass loading state
 						onBack={() => setIsComparing(false)}
 					/>
 				) : (
@@ -108,7 +124,7 @@ export default function DashboardHome() {
 				{!isComparing && selectedIds.length > 0 && (
 					<SelectionBar
 						count={selectedIds.length}
-						onCompare={() => setIsComparing(true)}
+						onCompare={handleCompare} // Call our new async handler
 						onClear={() => setSelectedIds([])}
 					/>
 				)}

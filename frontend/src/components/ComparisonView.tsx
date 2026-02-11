@@ -9,19 +9,40 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { ArrowLeft, Users, FileText, Activity } from "lucide-react";
+import {
+	ArrowLeft,
+	Users,
+	FileText,
+	Activity,
+	AlertTriangle,
+} from "lucide-react";
 import type { Trial } from "@/services/api";
 import { getStatusStyles } from "@/utils/trialHelpers";
 
 interface ComparisonViewProps {
 	trials: Trial[];
 	onBack: () => void;
+	loading?: boolean; // Added loading prop
 }
 
 const COL_WIDTH = "w-[560px] min-w-[560px] max-w-[560px]";
 const LABEL_COL_WIDTH = "w-[160px] min-w-[160px]";
 
-export function ComparisonView({ trials, onBack }: ComparisonViewProps) {
+export function ComparisonView({
+	trials,
+	onBack,
+	loading,
+}: ComparisonViewProps) {
+	// 1. Loading State (Inserted into your layout)
+	if (loading) {
+		return (
+			<div className="flex-1 flex flex-col items-center justify-center min-h-[400px] animate-in fade-in">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-300 mb-4" />
+				<p className="text-slate-500 font-medium">Analyzing clinical data...</p>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
 			{/* Header */}
@@ -65,7 +86,7 @@ export function ComparisonView({ trials, onBack }: ComparisonViewProps) {
 												<Badge
 													className={`text-[10px] px-1.5 py-0 h-5 ${getStatusStyles(trial.status)} shadow-none`}
 												>
-													{trial.status.split(" ")[0]}
+													{trial.status}
 												</Badge>
 											</div>
 											<div
@@ -92,12 +113,12 @@ export function ComparisonView({ trials, onBack }: ComparisonViewProps) {
 									>
 										<DataGrid
 											items={[
-												{ label: "Type", value: t.design },
-												{ label: "Phase", value: t.phase },
+												{ label: "Type", value: t.study_type || "N/A" }, // Updated field
+												{ label: "Phase", value: (t.phases || []).join(", ") },
 												{
 													label: "Enrollment",
 													value: t.enrollment_count
-														? `${t.enrollment_count}${t.enrollment_type ? ` (${t.enrollment_type})` : ""}`
+														? `${t.enrollment_count.toLocaleString()} (${t.enrollment_type || "N/A"})` // Updated formatting
 														: "N/A",
 												},
 											]}
@@ -115,17 +136,24 @@ export function ComparisonView({ trials, onBack }: ComparisonViewProps) {
 										key={t.nct_id}
 										className={`${COL_WIDTH} p-4 align-top border-r border-slate-100`}
 									>
-										<div className="text-sm text-slate-700 space-y-2 whitespace-normal break-words">
-											{(t.interventions || "").split(",").map((part, i) => (
-												<p key={i}>{part.trim()}</p>
+										<div className="flex flex-wrap gap-1">
+											{(t.interventions || []).map((item, i) => (
+												<Badge
+													key={i}
+													variant="secondary"
+													className="font-normal text-xs"
+												>
+													{item}
+												</Badge>
 											))}
 										</div>
 									</TableCell>
 								))}
 							</ComparisonRow>
 
+							{/* EFFICACY - NOW USING BULLETS */}
 							<ComparisonRow
-								label="Efficacy"
+								label="Efficacy (AI)"
 								icon={<FileText className="w-4 h-4 text-slate-400" />}
 							>
 								{trials.map((t) => (
@@ -133,27 +161,59 @@ export function ComparisonView({ trials, onBack }: ComparisonViewProps) {
 										key={t.nct_id}
 										className={`${COL_WIDTH} p-4 align-top border-r border-slate-100`}
 									>
-										<div className="text-sm text-slate-700 space-y-2 whitespace-normal break-words">
-											{t.efficacy.split("||").map((part, i) => (
-												<p key={i}>{part.trim()}</p>
-											))}
+										<div className="flex flex-col gap-2">
+											{/* Map the array to bullets */}
+											{t.efficacy_summary && t.efficacy_summary.length > 0 ? (
+												t.efficacy_summary.map((line, i) => (
+													<div
+														key={i}
+														className="flex gap-2 text-sm text-slate-700"
+													>
+														<span className="text-slate-400 shrink-0 mt-1">
+															•
+														</span>
+														<span>{line}</span>
+													</div>
+												))
+											) : (
+												<span className="text-slate-400 italic text-sm">
+													No analysis.
+												</span>
+											)}
 										</div>
 									</TableCell>
 								))}
 							</ComparisonRow>
 
+							{/* SAFETY - NOW USING BULLETS */}
 							<ComparisonRow
-								label="Safety"
-								icon={<Activity className="w-4 h-4 text-slate-400" />}
+								label="Safety (AI)"
+								icon={<AlertTriangle className="w-4 h-4 text-slate-400" />}
 							>
 								{trials.map((t) => (
 									<TableCell
 										key={t.nct_id}
 										className={`${COL_WIDTH} p-4 align-top border-r border-slate-100`}
 									>
-										<p className="text-sm text-slate-700 whitespace-normal break-words">
-											{t.safety}
-										</p>
+										<div className="flex flex-col gap-2">
+											{t.safety_summary && t.safety_summary.length > 0 ? (
+												t.safety_summary.map((line, i) => (
+													<div
+														key={i}
+														className="flex gap-2 text-sm text-slate-700"
+													>
+														<span className="text-slate-400 shrink-0 mt-1">
+															•
+														</span>
+														<span>{line}</span>
+													</div>
+												))
+											) : (
+												<span className="text-slate-400 italic text-sm">
+													No analysis.
+												</span>
+											)}
+										</div>
 									</TableCell>
 								))}
 							</ComparisonRow>
@@ -166,7 +226,7 @@ export function ComparisonView({ trials, onBack }: ComparisonViewProps) {
 	);
 }
 
-// Helper components
+// Helper components (Unchanged)
 interface ComparisonRowProps {
 	label: string;
 	icon: React.ReactNode;
