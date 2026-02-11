@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -10,6 +12,14 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
     print("Shutting down...")
+
+load_dotenv()
+
+ai_key = os.getenv("GEMINI_API_KEY")
+if ai_key:
+    os.environ["GOOGLE_API_KEY"] = ai_key
+else:
+    raise ValueError("CRITICAL ERROR: 'GEMINI_API_KEY' not found in environment variables.")
 
 app = FastAPI(
     title="Trials Dashboard",
