@@ -22,7 +22,7 @@ import { getStatusStyles } from "@/utils/trialHelpers";
 interface ComparisonViewProps {
 	trials: Trial[];
 	onBack: () => void;
-	loading?: boolean; // Added loading prop
+	loading?: boolean;
 }
 
 const COL_WIDTH = "w-[560px] min-w-[560px] max-w-[560px]";
@@ -33,12 +33,16 @@ export function ComparisonView({
 	onBack,
 	loading,
 }: ComparisonViewProps) {
-	// 1. Loading State (Inserted into your layout)
+	// 1. RESTORED: Blue Loading State
 	if (loading) {
 		return (
 			<div className="flex-1 flex flex-col items-center justify-center min-h-[400px] animate-in fade-in">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-300 mb-4" />
-				<p className="text-slate-500 font-medium">Analyzing clinical data...</p>
+				{/* Blue Spinner */}
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4" />
+				{/* Specific AI Text */}
+				<p className="text-slate-500 font-medium">
+					Analyzing clinical data with AI...
+				</p>
 			</div>
 		);
 	}
@@ -113,12 +117,12 @@ export function ComparisonView({
 									>
 										<DataGrid
 											items={[
-												{ label: "Type", value: t.study_type || "N/A" }, // Updated field
+												{ label: "Type", value: t.study_type || "N/A" },
 												{ label: "Phase", value: (t.phases || []).join(", ") },
 												{
 													label: "Enrollment",
 													value: t.enrollment_count
-														? `${t.enrollment_count.toLocaleString()} (${t.enrollment_type || "N/A"})` // Updated formatting
+														? `${t.enrollment_count.toLocaleString()} (${t.enrollment_type || "N/A"})`
 														: "N/A",
 												},
 											]}
@@ -151,7 +155,7 @@ export function ComparisonView({
 								))}
 							</ComparisonRow>
 
-							{/* EFFICACY - NOW USING BULLETS */}
+							{/* EFFICACY */}
 							<ComparisonRow
 								label="Efficacy (AI)"
 								icon={<FileText className="w-4 h-4 text-slate-400" />}
@@ -162,17 +166,19 @@ export function ComparisonView({
 										className={`${COL_WIDTH} p-4 align-top border-r border-slate-100`}
 									>
 										<div className="flex flex-col gap-2">
-											{/* Map the array to bullets */}
 											{t.efficacy_summary && t.efficacy_summary.length > 0 ? (
 												t.efficacy_summary.map((line, i) => (
+													// FIX 1 & 2: items-baseline for alignment, whitespace-normal for wrapping
 													<div
 														key={i}
-														className="flex gap-2 text-sm text-slate-700"
+														className="flex gap-2 items-baseline text-sm text-slate-700"
 													>
-														<span className="text-slate-400 shrink-0 mt-1">
+														<span className="text-slate-400 shrink-0 text-[10px]">
 															•
 														</span>
-														<span>{line}</span>
+														<span className="whitespace-normal leading-relaxed">
+															{line}
+														</span>
 													</div>
 												))
 											) : (
@@ -185,7 +191,7 @@ export function ComparisonView({
 								))}
 							</ComparisonRow>
 
-							{/* SAFETY - NOW USING BULLETS */}
+							{/* SAFETY */}
 							<ComparisonRow
 								label="Safety (AI)"
 								icon={<AlertTriangle className="w-4 h-4 text-slate-400" />}
@@ -198,14 +204,17 @@ export function ComparisonView({
 										<div className="flex flex-col gap-2">
 											{t.safety_summary && t.safety_summary.length > 0 ? (
 												t.safety_summary.map((line, i) => (
+													// FIX 1 & 2: items-baseline for alignment, whitespace-normal for wrapping
 													<div
 														key={i}
-														className="flex gap-2 text-sm text-slate-700"
+														className="flex gap-2 items-baseline text-sm text-slate-700"
 													>
-														<span className="text-slate-400 shrink-0 mt-1">
+														<span className="text-slate-400 shrink-0 text-[10px]">
 															•
 														</span>
-														<span>{line}</span>
+														<span className="whitespace-normal leading-relaxed">
+															{line}
+														</span>
 													</div>
 												))
 											) : (
